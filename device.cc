@@ -14,14 +14,14 @@ enum nextStep
 class device : public cSimpleModule
 {
 private:
-    cMessage *msg;                          // Данные для отправки через cMessage
-    unsigned char p_publicKey[ECC_BYTES + 1];     // Public key
-    unsigned char p_privateKey[ECC_BYTES];        // Private key
-    unsigned char p_hash[ECC_BYTES];              // Хэш
-    unsigned char p_signature[ECC_BYTES * 2];     // Подпись
-    std::string indicatorInfoHash;          // Показания счетчика Hash
-    std::string indicatorInfo;              // Показания счетчика
-    nextStep currentStep;                   // Текущий этап алгоритма
+    cMessage *msg;
+    unsigned char p_publicKey[ECC_BYTES + 1];                                       // Public key
+    unsigned char p_privateKey[ECC_BYTES];                                          // Private key
+    unsigned char p_hash[ECC_BYTES];                                                // Hash
+    unsigned char p_signature[ECC_BYTES * 2];                                       // Signature
+    std::string indicatorInfoHash;                                                  // Indicator info with md5
+    std::string indicatorInfo;                                                      // Indicator info
+    nextStep currentStep;
     int functionStateReturn = 0;
     unsigned char *duplicate;
     unsigned int i = 0;
