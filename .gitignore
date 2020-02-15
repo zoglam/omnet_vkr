@@ -1,0 +1,8 @@
+.*
+!.gitignore
+
+frames
+out
+results
+
+*.exe
