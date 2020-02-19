@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for zegbee2
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -I. -IC:/omnetpp-5.6/addons/chilkat-9.5.0-x86_64-vc2017/include -LC:/omnetpp-5.6/addons/chilkat-9.5.0-x86_64-vc2017/libs
+#  opp_makemake -f --deep -O out -I. -LC:/omnetpp-5.6/addons/chilkat-9.5.0-x86_64-vc2017/libs
 #
 
 # Name of target to be created (-o option)
@@ -16,7 +16,7 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I. -IC:/omnetpp-5.6/addons/chilkat-9.5.0-x86_64-vc2017/include
+INCLUDE_PATH = -I.
 
 # Additional object and library files to link with
 EXTRA_OBJS =
@@ -30,7 +30,7 @@ PROJECTRELATIVE_PATH =
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/device.o $O/ecc.o $O/md5.o $O/server.o
+OBJS = $O/device.o $O/ecc.o $O/server.o
 
 # Message files
 MSGFILES =

@@ -1,27 +1,33 @@
 #include <omnetpp.h>
 #include "ecc.h"
-#include "md5.h"
 #include <iostream>
 #include <stdint.h>
-#include <string.h>
 using namespace omnetpp;
+
+typedef struct // size = 16*2 + 16
+{
+    uint8_t p_signature[ECC_BYTES * 2];                                       // Signature
+    uint8_t p_hash[ECC_BYTES];                                                // Public key
+} DEVICE_MSG;
 
 enum nextStep
 {
-    Step1, Step2, Step3
+    Step1, Step2
 };
 
 class server : public cSimpleModule
 {
 private:
     cMessage *msg;
-    unsigned char *p_publicKey;
-    unsigned char *p_signature;
-    unsigned char *p_hash;
+    DEVICE_MSG DeviceMsg;
+    uint8_t *p_publicKey;                                                     // Public key
+    uint8_t p_hash[ECC_BYTES];                                                // Hash
+    uint8_t p_signature[ECC_BYTES * 2];                                       // Signature
     nextStep currentStep = Step1;
     int functionStateReturn = 0;
-    unsigned int i = 0;
     char *duplicate;
+
+    uint8_t array[48];
 protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
@@ -39,28 +45,24 @@ void server::handleMessage(cMessage *msg)
     target = getParentModule()->getSubmodule("Device");
     switch (currentStep) {
         case Step1:
-            duplicate = (char*) msg->getName();                                     // get arrived massage
-            p_publicKey = reinterpret_cast<unsigned char*>(duplicate);              // char -> unsigned char
-            EV << "New Public key in DB: " << p_publicKey << endl;
+            duplicate = (char*) msg->getName();                                                             // get arrived message
+            p_publicKey = reinterpret_cast<unsigned char*>(duplicate);
+            EV << "New Public key in DB" << endl;
             sendDirect(msg, target, "radioIn");
             currentStep = Step2;
             return;
         case Step2:
-            duplicate = (char*) msg->getName();                                     // get arrived massage
-            p_hash = reinterpret_cast<unsigned char*>(duplicate);                   // char -> unsigned char
-            EV << "New Hash: " << p_hash << endl;
+            duplicate = (char*) msg->getName();                                                             // get arrived message
+            memcpy((char*) &DeviceMsg, reinterpret_cast<unsigned char*>(duplicate), sizeof(DEVICE_MSG));    // full arrived message copy to structure
+            memcpy(p_signature, DeviceMsg.p_signature, sizeof(p_signature));                                // signature from
+            memcpy(p_hash, DeviceMsg.p_hash, sizeof(p_hash));
+
+            functionStateReturn = ecdsa_verify(p_publicKey, DeviceMsg.p_hash, DeviceMsg.p_signature);                           // Verify signature
+            EV << "Verify status is(1|0): " << functionStateReturn << endl;
+
             msg = new cMessage(duplicate);
             sendDirect(msg, target, "radioIn");
-            currentStep = Step3;
-            return;
-        case Step3:
-            duplicate = (char*) msg->getName();                                     // get arrived massage
-            p_signature = reinterpret_cast<unsigned char*>(duplicate);              // char -> unsigned char
-            EV << "New Signature: " << p_signature << endl;
-            functionStateReturn = ecdsa_verify(p_publicKey, p_hash, p_signature);   // Verify signature
-            EV << "Verify status is(1|0): " << functionStateReturn << endl;
-            sendDirect(msg, target, "radioIn");
-            currentStep = Step1;
+            currentStep = Step2;
             return;
     }
 }

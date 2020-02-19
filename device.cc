@@ -1,31 +1,35 @@
 #include <omnetpp.h>
 #include "ecc.h"
-#include "md5.h"
 #include <iostream>
 #include <stdint.h>
-#include <string.h>
 using namespace omnetpp;
+
+typedef struct // size = 16*2 + 16
+{
+    uint8_t p_signature[ECC_BYTES * 2];
+    uint8_t p_hash[ECC_BYTES];
+} DEVICE_MSG;
 
 enum nextStep
 {
-    Step1, Step2, Step3
+    Step1, Step2
 };
 
 class device : public cSimpleModule
 {
 private:
     cMessage *msg;
-    unsigned char p_publicKey[ECC_BYTES + 1];                                       // Public key
-    unsigned char p_privateKey[ECC_BYTES];                                          // Private key
-    unsigned char p_hash[ECC_BYTES];                                                // Hash
-    unsigned char p_signature[ECC_BYTES * 2];                                       // Signature
-    std::string indicatorInfoHash;                                                  // Indicator info with md5
-    std::string indicatorInfo;                                                      // Indicator info
+    DEVICE_MSG DeviceMsg;
+    uint8_t p_publicKey[ECC_BYTES + 1];                                       // Public key
+    uint8_t p_privateKey[ECC_BYTES];                                          // Private key
+    uint8_t p_hash[ECC_BYTES];                                                // Hash
+    uint8_t p_signature[ECC_BYTES * 2];                                       // Signature                                                      // Indicator info
     nextStep currentStep;
     int functionStateReturn = 0;
     unsigned char *duplicate;
     unsigned int i = 0;
     char *converted;
+    char array[48];
 protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
@@ -38,8 +42,6 @@ void device::initialize()
     nextStep currentStep = Step1;
     functionStateReturn = ecc_make_key(p_publicKey, p_privateKey);                  // Create Public and Private keys
     EV << "Keys created?(1|0): " << functionStateReturn << endl;
-    EV << "Created p_publicKey : " << p_publicKey << endl;
-    EV << "Created p_privateKey: " << p_privateKey << endl;
     duplicate = p_publicKey;
     converted = reinterpret_cast<char*>(duplicate);                                 // unsigned char -> char
     msg = new cMessage(converted);
@@ -56,24 +58,21 @@ void device::handleMessage(cMessage *msg)
             currentStep = Step2;
             return;
         case Step2:
-            indicatorInfo = "80";
-            indicatorInfoHash = md5(indicatorInfo);                                 // MD5
-            strcpy((char*) p_hash, indicatorInfoHash.c_str());                      // string -> unsigned char
-            EV << "Created p_hash: " << p_hash << endl;
-            msg = new cMessage(indicatorInfoHash.c_str());
-            scheduleAt(simTime() + dblrand(), msg->dup());
-            sendDirect(msg, target, "radioIn");
-            currentStep = Step3;
-            return;
-        case Step3:
+            for (i = 0; i < sizeof(p_hash); i++) {
+                p_hash[i] = 90;
+            }
+
+            memcpy(DeviceMsg.p_hash, p_hash, sizeof(p_hash));
+
             functionStateReturn = ecdsa_sign(p_privateKey, p_hash, p_signature);    // Create signature
             EV << "Signature created?(1|0): " << functionStateReturn << endl;
-            duplicate = p_signature;
-            converted = reinterpret_cast<char*>(duplicate);                         // unsigned char -> char
-            msg = new cMessage(converted);
+            memcpy(DeviceMsg.p_signature, p_signature, sizeof(p_signature));
+            memcpy(array, (char*) &DeviceMsg, sizeof(DEVICE_MSG));
+            msg = new cMessage(array);
+
             scheduleAt(simTime() + dblrand(), msg->dup());
             sendDirect(msg, target, "radioIn");
-            currentStep = Step1;
+            currentStep = Step2;
             return;
     }
 }

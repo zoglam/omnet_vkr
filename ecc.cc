@@ -1,8 +1,6 @@
 #include "ecc.h"
-#include <string.h>
 
-#include <iostream>
-using namespace std;
+#include <string.h>
 
 #define NUM_ECC_DIGITS (ECC_BYTES/8)
 #define MAX_TRIES 16
@@ -1063,7 +1061,7 @@ static void ecc_point_decompress(EccPoint *p_point, const uint8_t p_compressed[E
     }
 }
 
-int ecc_make_key(unsigned char p_publicKey[ECC_BYTES + 1], unsigned char p_privateKey[ECC_BYTES])
+int ecc_make_key(uint8_t p_publicKey[ECC_BYTES + 1], uint8_t p_privateKey[ECC_BYTES])
 {
     uint64_t l_private[NUM_ECC_DIGITS];
     EccPoint l_public;
@@ -1093,11 +1091,10 @@ int ecc_make_key(unsigned char p_publicKey[ECC_BYTES + 1], unsigned char p_priva
     ecc_native2bytes(p_privateKey, l_private);
     ecc_native2bytes(p_publicKey + 1, l_public.x);
     p_publicKey[0] = 2 + (l_public.y[0] & 0x01);
-
     return 1;
 }
 
-int ecdh_shared_secret(const unsigned char p_publicKey[ECC_BYTES + 1], const unsigned char p_privateKey[ECC_BYTES], unsigned char p_secret[ECC_BYTES])
+int ecdh_shared_secret(const uint8_t p_publicKey[ECC_BYTES + 1], const uint8_t p_privateKey[ECC_BYTES], uint8_t p_secret[ECC_BYTES])
 {
     EccPoint l_public;
     uint64_t l_private[NUM_ECC_DIGITS];
@@ -1238,7 +1235,7 @@ int ecdsa_sign(const uint8_t p_privateKey[ECC_BYTES], const uint8_t p_hash[ECC_B
     return 1;
 }
 
-int ecdsa_verify(const unsigned char p_publicKey[ECC_BYTES + 1], const unsigned char p_hash[ECC_BYTES], const unsigned char p_signature[ECC_BYTES * 2])
+int ecdsa_verify(const uint8_t p_publicKey[ECC_BYTES + 1], const uint8_t p_hash[ECC_BYTES], const uint8_t p_signature[ECC_BYTES * 2])
 {
     uint64_t u1[NUM_ECC_DIGITS], u2[NUM_ECC_DIGITS];
     uint64_t z[NUM_ECC_DIGITS];
@@ -1321,5 +1318,3 @@ int ecdsa_verify(const unsigned char p_publicKey[ECC_BYTES + 1], const unsigned 
     /* Accept only if v == r. */
     return (vli_cmp(rx, l_r) == 0);
 }
-
-
