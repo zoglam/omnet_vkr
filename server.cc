@@ -1,7 +1,9 @@
 #include <omnetpp.h>
+#include <stdio.h>
 #include "ecc.h"
 #include <iostream>
 #include <stdint.h>
+#include <time.h>
 using namespace omnetpp;
 
 typedef struct // size = 16*2 + 16
@@ -18,6 +20,7 @@ enum nextStep
 class server : public cSimpleModule
 {
 private:
+    simtime_t timeout;  // timeout
     cMessage *msg;
     DEVICE_MSG DeviceMsg;
     uint8_t *p_publicKey;                                                     // Public key
@@ -48,8 +51,9 @@ void server::handleMessage(cMessage *msg)
             duplicate = (char*) msg->getName();                                                             // get arrived message
             p_publicKey = reinterpret_cast<unsigned char*>(duplicate);
             EV << "New Public key in DB" << endl;
-            sendDirect(msg, target, "radioIn");
+            send(msg, "out");
             currentStep = Step2;
+            scheduleAt(simTime() + dblrand(), msg->dup());
             return;
         case Step2:
             duplicate = (char*) msg->getName();                                                             // get arrived message
@@ -61,7 +65,7 @@ void server::handleMessage(cMessage *msg)
             EV << "Verify status is(1|0): " << functionStateReturn << endl;
 
             msg = new cMessage(duplicate);
-            sendDirect(msg, target, "radioIn");
+            send(msg, "out");
             currentStep = Step2;
             return;
     }

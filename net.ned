@@ -2,14 +2,16 @@ simple device
 {
     @display("i=device/cpu;p=230,40");
     gates:
-        input radioIn @directIn;
+        input in;
+        output out;
 }
 
 simple server
 {
     @display("i=abstract/router");
     gates:
-        input radioIn @directIn;
+        input in;
+        output out;
 }
 
 network Network
@@ -22,5 +24,8 @@ network Network
         Server: server {
             @display("p=192.525,62.665");
         }
+    connections:
+        Device.out --> {  delay = 10ms; } --> Server.in;
+        Device.in <-- {  delay = 10ms; } <-- Server.out;
 }
 

@@ -1,4 +1,5 @@
 #include <omnetpp.h>
+#include <stdio.h>
 #include "ecc.h"
 #include <iostream>
 #include <stdint.h>
@@ -39,6 +40,7 @@ Define_Module(device);
 
 void device::initialize()
 {
+
     nextStep currentStep = Step1;
     functionStateReturn = ecc_make_key(p_publicKey, p_privateKey);                  // Create Public and Private keys
     EV << "Keys created?(1|0): " << functionStateReturn << endl;
@@ -54,7 +56,7 @@ void device::handleMessage(cMessage *msg)
     target = getParentModule()->getSubmodule("Server");
     switch (currentStep) {
         case Step1:
-            sendDirect(msg, target, "radioIn");
+            send(msg, "out");
             currentStep = Step2;
             return;
         case Step2:
@@ -71,7 +73,7 @@ void device::handleMessage(cMessage *msg)
             msg = new cMessage(array);
 
             scheduleAt(simTime() + dblrand(), msg->dup());
-            sendDirect(msg, target, "radioIn");
+            send(msg, "out");
             currentStep = Step2;
             return;
     }
